@@ -6,11 +6,12 @@ import (
 	"html"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
-var movies Movies = Movies{Movie{"Grinch", "Some Guy", 2000, "QWERT WERTyuaids sdf"}, Movie{"Wonder Cat", "Some Guy ^2", 2011, "QWERT WERTyuaids sdf"}}
+var movies = Movies{Movie{"Grinch", "Some Guy", 2000, "QWERT WERTyuaids sdf"}, Movie{"Wonder Cat", "Some Guy ^2", 2011, "QWERT WERTyuaids sdf"}}
 
 // Index _
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +27,12 @@ func ListMovies(w http.ResponseWriter, r *http.Request) {
 // GetMovie _
 func GetMovie(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	fmt.Fprintf(w, "Movie #%s", params["id"])
+	id, _ := strconv.Atoi(params["id"])
+	if id > len(movies)-1 {
+		fmt.Fprintf(w, "Lo sentimos, la pelicula solicitada no ha podido ser encontrada")
+	} else {
+		json.NewEncoder(w).Encode(movies[id])
+	}
 }
 
 // AddMovie _
