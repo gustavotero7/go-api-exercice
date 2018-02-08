@@ -9,9 +9,20 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	//"gopkg.in/mgo.v2/bson"
+	"gopkg.in/mgo.v2"
 )
 
 var movies = Movies{Movie{"Grinch", "Some Guy", 2000, "QWERT WERTyuaids sdf"}, Movie{"Wonder Cat", "Some Guy ^2", 2011, "QWERT WERTyuaids sdf"}}
+var collection = getSession().DB("MovieStore").C("movies")
+
+func getSession() *mgo.Session {
+	session, err := mgo.Dial("mongodb://localhost")
+	if err != nil {
+		panic(err)
+	}
+	return session
+}
 
 // Index _
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +32,17 @@ func Index(w http.ResponseWriter, r *http.Request) {
 // ListMovies _
 func ListMovies(w http.ResponseWriter, r *http.Request) {
 
-	json.NewEncoder(w).Encode(movies)
+	var results []Movie
+	err := collection.Find(nil).All(&results)
+
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		fmt.Print("Se han obtenido los registros de la BD ", results)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+
 }
 
 // GetMovie _
@@ -46,7 +67,15 @@ func AddMovie(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	log.Println(movieData)
+	err = collection.Insert(movieData)
+
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(movieData)
-	movies = append(movies, movieData)
+	w.WriteHeader(200)
+	//movies = append(movies, movieData)
 }
